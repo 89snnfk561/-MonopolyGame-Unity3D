@@ -1,0 +1,90 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Player : MonoBehaviour
+{
+    public List<Transform> PlayerList = new List<Transform>();
+    int[] stop_turn;
+    public PlayerState[] playerStates;
+
+    public Route[] currentRoute;
+    int routePosition;
+    public int steps;
+    bool isMoving;
+
+    int current = 0;
+    int next = 0;
+    
+
+    private void Awake()
+    {
+        playerStates = new PlayerState[PlayerList.Count];
+        stop_turn = new int[PlayerList.Count];
+        currentRoute = new Route[PlayerList.Count];
+        for(int i = 0; i < PlayerList.Count; i++)
+        {
+            playerStates[i] = PlayerState.finish;
+            stop_turn[i] = 0;
+        }
+
+    }
+    private void Update()
+    {
+        if(current == next)
+        {
+            playerStates[current] = PlayerState.start;
+            next += 1;
+            next %= 4;
+        }
+        if(Input.GetKeyDown(KeyCode.Space) && !isMoving && playerStates[current] == PlayerState.start)
+        {
+            steps = 10;
+            Debug.Log("Dice Rolled " + steps);
+            StartCoroutine(Move());
+            
+        }
+    }
+
+    IEnumerator Move()
+    {
+        if (isMoving)
+        {
+            yield break;
+        }
+        isMoving = true;
+
+        while (steps > 0)
+        {
+            routePosition++;
+            routePosition %= currentRoute[current].childNodeList.Count;
+
+            Vector3 nextPos = currentRoute[current].childNodeList[routePosition].position;
+
+            Vector3 vec = new Vector3(nextPos.x, PlayerList[current].position.y, nextPos.z);
+            PlayerList[current].LookAt(vec);
+
+            while (MoveToNextNode(nextPos)) { yield return null; }
+
+            
+            yield return new WaitForSeconds(0.1f);
+            steps--;
+
+            if(steps == 0)
+            {
+
+                playerStates[current] = PlayerState.finish;
+                current = next;
+            }
+        }
+
+
+        isMoving = false;
+        
+    }
+
+    bool MoveToNextNode(Vector3 goal)
+    {
+        return goal != (PlayerList[current].position = Vector3.MoveTowards(PlayerList[current].position, goal, 50f * Time.deltaTime));
+    }
+}

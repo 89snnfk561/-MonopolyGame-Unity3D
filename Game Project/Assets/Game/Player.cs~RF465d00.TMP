@@ -1,0 +1,58 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Player : MonoBehaviour
+{
+    public Route currentRoute;
+    int routePosition;
+    public int steps;
+    bool isMoving;
+
+
+    private void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.Space) && !isMoving)
+        {
+            steps = 10;
+            Debug.Log("Dice Rolled " + steps);
+            StartCoroutine(Move());
+            
+        }
+
+    }
+
+    IEnumerator Move()
+    {
+        if (isMoving)
+        {
+            yield break;
+        }
+        isMoving = true;
+
+        while (steps > 0)
+        {
+            routePosition++;
+            routePosition %= currentRoute.childNodeList.Count;
+
+            Vector3 nextPos = currentRoute.childNodeList[routePosition].position;
+
+            Vector3 vec = new Vector3(nextPos.x, transform.position.y, nextPos.z);
+            transform.LookAt(vec);
+
+            while (MoveToNextNode(nextPos)) { yield return null; }
+            
+
+            yield return new WaitForSeconds(0.1f);
+            steps--;
+        }
+
+        isMoving = false;
+        
+    }
+
+    bool MoveToNextNode(Vector3 goal)
+    {
+        return goal != (transform.position = Vector3.MoveTowards(transform.position, goal, 50f * Time.deltaTime));
+    }
+}

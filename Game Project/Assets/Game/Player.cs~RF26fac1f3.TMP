@@ -1,0 +1,98 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class Player : MonoBehaviour
+{
+    public List<Transform> PlayerList = new List<Transform>();
+    public List<Transform> TCPs = new List<Transform>();
+    int[] stop_turn;
+    public PlayerState[] playerStates;
+
+    public Route currentRoute;
+    int[] routePosition;
+    public int steps;
+    bool isMoving;
+
+    int current = 0;
+    int next = 0;
+    
+
+    private void Awake()
+    {
+        playerStates = new PlayerState[GameData.PlayerCount];
+        stop_turn = new int[GameData.PlayerCount];
+        routePosition = new int[GameData.PlayerCount];
+        for(int i = 0; i < GameData.PlayerCount; i++)
+        {
+            playerStates[i] = PlayerState.finish;
+            stop_turn[i] = 0;
+            routePosition[i] = 0;
+        }
+        for (int i = GameData.PlayerCount; i < PlayerList.Count; i++)
+        {
+            PlayerList[i].gameObject.SetActive(false);
+        }
+
+    }
+    private void Update()
+    {
+        if(current == next)
+        {
+            playerStates[current] = PlayerState.start;
+            next += 1;
+            next %= GameData.PlayerCount;
+        }
+        if(Input.GetKeyDown(KeyCode.Space) && !isMoving && playerStates[current] == PlayerState.start)
+        {
+            //SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+            GameData.steps = 6;
+            steps = GameData.steps;
+            Debug.Log("Dice Rolled " + steps);
+            StartCoroutine(Move());
+        }
+        currentRoute.childNodeList[routePosition[current]].SendMessage("calculate");
+    }
+
+    IEnumerator Move()
+    {
+        if (isMoving)
+        {
+            yield break;
+        }
+        isMoving = true;
+
+        while (steps > 0)
+        {
+            routePosition[current]++;
+            routePosition[current] %= currentRoute.childNodeList.Count;
+
+            Vector3 nextPos = currentRoute.childNodeList[routePosition[current]].position;
+
+            Vector3 vec = new Vector3(nextPos.x, PlayerList[current].position.y, nextPos.z);
+             PlayerList[current].LookAt(vec);
+
+            while (MoveToNextNode(nextPos)) { yield return null; }
+
+            
+            yield return new WaitForSeconds(0.1f);
+            steps--;
+        }
+        if(steps == 0)
+        {
+            playerStates[current] = PlayerState.finish;
+            TCPs[current].gameObject.SetActive(false);
+            TCPs[next].gameObject.SetActive(true);
+            current = next;
+        }
+
+        isMoving = false;
+        
+    }
+    
+    bool MoveToNextNode(Vector3 goal)
+    {
+        return goal != (PlayerList[current].position = Vector3.MoveTowards(PlayerList[current].position, goal, 50f * Time.deltaTime));
+    }
+}

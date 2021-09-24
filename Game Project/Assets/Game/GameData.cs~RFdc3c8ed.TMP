@@ -1,0 +1,23 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public static class GameData
+{
+    public static int round = 0;
+    public static int steps = 0;
+    public static bool DiceRoll = false;
+}
+public enum PlayerState
+{
+    finish,
+    start,
+    stop
+}
+public enum BuildState
+{
+    Nothing,
+    level_1,
+    level_2,
+    level_3
+}

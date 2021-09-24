@@ -1,0 +1,67 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Route : MonoBehaviour
+{
+    Transform[] childObjects;
+    public List<Transform> childNodeList = new List<Transform>();
+    private List<LineRenderer> lines = new List<LineRenderer>();
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+
+        FillNodes();
+
+        for (int i = 0; i < childNodeList.Count; i++)
+        {
+            Vector3 currentPos = childNodeList[i].position;
+            if(i > 0)
+            {
+                Vector3 prevPos = childNodeList[i - 1].position;
+                Gizmos.DrawLine(prevPos, currentPos);
+            }
+        }
+    }
+    private void Start()
+    {
+        for (int i = 0; i < childNodeList.Count; i++)
+        {
+            lines[i] = gameObject.AddComponent<LineRenderer>();
+            lines[i].positionCount = childNodeList.Count + 1;
+
+            lines[i].startColor = Color.cyan;
+            lines[i].endColor = Color.red;
+
+            lines[i].startWidth = 5f;
+            lines[i].endWidth = 1f;
+        }
+        for (int i = 0; i < childNodeList.Count; i++)
+        {
+            Vector3 currentPos = childNodeList[i].position;
+            if (i > 0)
+            {
+                Vector3 prevPos = childNodeList[i - 1].position;
+                lines[i].SetPosition(0, prevPos);
+                lines[i].SetPosition(1, currentPos);
+            }
+            
+        }
+
+    }
+    void FillNodes()
+    {
+        childNodeList.Clear();
+
+        childObjects = GetComponentsInChildren<Transform>();
+
+        foreach(Transform child in childObjects)
+        {
+            if(child != this.transform)
+            {
+                childNodeList.Add(child);
+            }
+        }
+    }
+}
